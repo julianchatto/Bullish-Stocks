@@ -1,5 +1,7 @@
 import yfinance as yf
 import pandas as pd
+import matplotlib.pyplot as plt
+
 
 tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]  
 
@@ -10,18 +12,16 @@ def calculate_ema(data, window):
 # Function to determine if stock is above EMAs
 def is_above_ema(ticker):
     stock = yf.Ticker(ticker)
-    hist = stock.history(period="3mo")
-    
-    hist['EMA21'] = calculate_ema(hist['Close'], 21)
-    hist['EMA33'] = calculate_ema(hist['Close'], 33)
-    hist['EMA55'] = calculate_ema(hist['Close'], 55)
-
+    hist = stock.history(period="1y")
+    y_axis = []
+    for i in range(1, 52):
+        y_axis.append(calculate_ema(hist['Close'], i * 7).iloc[-1])
+    df = pd.DataFrame({'x_axis': range(1, 52), 'y_axis': y_axis})
+    plt.plot('x_axis', 'y_axis', data=df, linestyle='-', marker='o')
+    plt.show()
     latest_price = hist['Close'].iloc[-1]
-    ema21 = hist['EMA21'].iloc[-1]
-    ema33 = hist['EMA33'].iloc[-1]
-    ema55 = hist['EMA55'].iloc[-1]
-    print(ticker, ema21, ema33, ema55)
 
 for ticker in tickers:
     is_above_ema(ticker)
+
 
