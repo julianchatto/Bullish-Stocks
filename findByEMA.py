@@ -1,27 +1,30 @@
 import yfinance as yf
-import pandas as pd
 import matplotlib.pyplot as plt
-
 
 tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]  
 
-# calculate EMA
 def calculate_ema(data, window):
-    return data.ewm(span=window, adjust=False).mean()
+    return data['Close'].ewm(span=window, adjust=False).mean()
 
-# Function to determine if stock is above EMAs
-def is_above_ema(ticker):
-    stock = yf.Ticker(ticker)
-    hist = stock.history(period="1y")
-    y_axis = []
-    for i in range(1, 52):
-        y_axis.append(calculate_ema(hist['Close'], i * 7).iloc[-1])
-    df = pd.DataFrame({'x_axis': range(1, 52), 'y_axis': y_axis})
-    plt.plot('x_axis', 'y_axis', data=df, linestyle='-', marker='o')
+def plotData(data, ticker):
+    plt.figure(figsize=(12, 6))
+    plt.plot(data.index, data['Close'], label='Closing Price')
+    plt.plot(data.index, data['12-day EMA'], label='12-day EMA', color='orange')
+    plt.plot(data.index, data['26-day EMA'], label='26-day EMA', color='green')
+    plt.plot(data.index, data['55-day EMA'], label='55-day EMA', color='yellow')
+    plt.plot(data.index, data['100-day EMA'], label='100-day EMA', color='red')
+    plt.title(f'{ticker} Exponential Moving Average (EMA)')
+    plt.xlabel('Date')
+    plt.ylabel('Price')
+    plt.legend()
+    plt.grid(True)
     plt.show()
-    latest_price = hist['Close'].iloc[-1]
 
 for ticker in tickers:
-    is_above_ema(ticker)
-
-
+    stock = yf.Ticker(ticker)
+    data = stock.history(period="1y")
+    data['12-day EMA'] = calculate_ema(data, 12)
+    data['26-day EMA'] = calculate_ema(data, 26)
+    data['55-day EMA'] = calculate_ema(data, 55)
+    data['100-day EMA'] = calculate_ema(data, 100)
+    plotData(data, ticker)
