@@ -1,30 +1,35 @@
 import yfinance as yf
 import matplotlib.pyplot as plt
+import numpy as np
 
 tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]  
 
 ema_params = [
-    ('12-day EMA', 'orange', 12),
-    ('26-day EMA', 'green', 26),
-    ('55-day EMA', 'yellow', 55),
-    ('100-day EMA', 'red', 100)
+    ('21-day EMA', 'orange', 21),
+    # ('33-day EMA', 'green', 33),
+    ('55-day EMA', 'yellow', 50),
+    # ('100-day EMA', 'red', 100)
 ]
 
 def calculate_ema(data, window):
-    return data['Close'].ewm(span=window, adjust=False).mean()
+    return data['Close'].ewm(span=window, adjust=True).mean()
 
 def plotData(data, ticker):
-    plt.figure(figsize=(12, 6))
-    plt.plot(data.index, data['Close'], label='Closing Price')
-    
-    for ema_label, color, _ in ema_params:
-        plt.plot(data.index, data[ema_label], label=ema_label, color=color)
+    fig = plt.figure(figsize=(12,6))
+    ax1 = fig.add_subplot(111, ylabel='Price in $')
 
-    plt.title(f'{ticker} Exponential Moving Average (EMA)')
-    plt.xlabel('Date')
-    plt.ylabel('Price')
-    plt.legend()
-    plt.grid(True)
+    data['Close'].plot(ax=ax1, color='b', lw=2.)
+    data['21-day EMA'].plot(ax=ax1, color='r', lw=2.)
+    data['55-day EMA'].plot(ax=ax1, color='g', lw=2.)
+
+    ax1.plot(data.loc[data.crossover == 1.0].index, 
+            data.Close[data.crossover == 1.0],
+            '^', markersize=10, color='g')
+    ax1.plot(data.loc[data.crossover == -1.0].index, 
+            data.Close[data.crossover == -1.0],
+            'v', markersize=10, color='r')
+    plt.legend(['Close', '21-day EMA', '55-day EMA', 'Buy', 'Sell'])
+    plt.title(f'{ticker} Exponential Moving Average Crossover')
     plt.show()
 
 for ticker in tickers:
@@ -33,5 +38,10 @@ for ticker in tickers:
     
     for ema_label, _, window in ema_params:
         data[ema_label] = calculate_ema(data, window)
+
+    data['bullish'] = 0.0
+    data['bullish'] = np.where(data['21-day EMA'] > data['55-day EMA'], 1.0, 0.0)
+    data['crossover'] = data['bullish'].diff()
+    
 
     plotData(data, ticker)
